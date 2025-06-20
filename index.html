@@ -38,8 +38,15 @@
         .video-background video {
             min-width: 100%;
             min-height: 100%;
+            width: auto;
+            height: auto;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
             object-fit: cover;
-        }
+            z-index: -1;
+         }
         
         .overlay {
             position: fixed;
@@ -382,10 +389,10 @@
 <body>
     <!-- Video Background -->
     <div class="video-background">
-        <video autoplay muted loop>
-            <source src="https://assets.mixkit.co/videos/preview/mixkit-network-of-lines-in-motion-in-a-digital-space-36657-large.mp4" type="video/mp4">
-            Your browser does not support the video tag.
-        </video>
+        <video autoplay muted loop playsinline>
+        <source src="videos/bc.mp4" type="video/mp4">
+          Your browser does not support the video tag.
+       </video>
     </div>
     <div class="overlay"></div>
     
@@ -586,8 +593,8 @@
                     <div class="footer-links">
                         <h5>Contact Us</h5>
                         <ul>
-                            <li><i class="fas fa-map-marker-alt me-2"></i> 123 AI Street, Tech City</li>
-                            <li><i class="fas fa-phone me-2"></i> +1 (123) 456-7890</li>
+                            <li><i class="fas fa-map-marker-alt me-2"></i> No3/7  chamara Uyana Street, Gampaha City</li>
+                            <li><i class="fas fa-phone me-2"></i> +1 (94) 765616887</li>
                             <li><i class="fas fa-envelope me-2"></i> info@aiassistant.com</li>
                         </ul>
                     </div>
@@ -596,7 +603,7 @@
             <hr class="mt-5 mb-4" style="border-color: rgba(255,255,255,0.1);">
             <div class="row">
                 <div class="col-md-6 text-center text-md-start">
-                    <p class="mb-0">&copy; 2023 AI Assistant by Dinusha Deshan. All rights reserved.</p>
+                    <p class="mb-0">&copy; 2025 AI Assistant by Dinusha Deshan. All rights reserved.</p>
                 </div>
                 <div class="col-md-6 text-center text-md-end">
                     <p class="mb-0">
@@ -653,27 +660,24 @@
             // Function to get AI response through a backend proxy
             async function getAIResponse(userMessage) {
     try {
-        const response = await fetch('http://localhost:3000/api/chat', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                message: userMessage
-            })
+        const response = await fetch("https://your-deployed-server.com/api/chat", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ message: userMessage })
         });
         
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
+        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
         
         const data = await response.json();
-        return data.response;
+        return data.response || "I didn't understand that.";
+        
     } catch (error) {
-        console.error('Error:', error);
-        return "I'm having trouble connecting to the AI service. Please try again later.";
+        console.error("Chat Error:", error);
+        return "Sorry, I'm having trouble responding. Please try again.";
     }
 }
+         
+
             
             // Handle send button click
             sendButton.addEventListener('click', async function() {
@@ -712,5 +716,24 @@
             });
         });
     </script>
+    <script>
+    // Force video play on iOS and other restrictive browsers
+    document.addEventListener('DOMContentLoaded', function() {
+        const video = document.querySelector('.video-background video');
+        if (video) {
+            video.play().catch(error => {
+                // Fallback for browsers that block autoplay
+                video.muted = true;
+                const playPromise = video.play();
+                if (playPromise !== undefined) {
+                    playPromise.catch(e => {
+                        console.log("Autoplay prevented, showing poster image");
+                        video.poster = 'fallback-image.jpg';
+                    });
+                }
+            });
+        }
+    });
+</script>
 </body>
 </html>
