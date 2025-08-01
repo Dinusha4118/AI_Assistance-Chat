@@ -1,0 +1,1205 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <?!= include('Stylesheet'); ?>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <link rel="stylesheet" href="https://cdn.datatables.net/1.11.5/css/jquery.dataTables.min.css">
+</head>
+<body>
+   <div class="admin-container">
+    <aside class="admin-sidebar">
+      <div class="sidebar-header">
+        <img src="https://ithelp.kln.ac.lk/logow-01.png" alt="University Logo" class="sidebar-logo">
+        <h3>Help Desk Admin</h3>
+      </div>
+      
+      <nav class="sidebar-nav">
+        <ul>
+          <li>
+            <a href="#" class="active" data-section="dashboard" onclick="showAdminSection('dashboard', event)">
+              <i class="fas fa-tachometer-alt"></i> Dashboard
+            </a>
+          </li>
+          <li>
+            <a href="#" data-section="tickets" onclick="showAdminSection('tickets', event)">
+              <i class="fas fa-ticket-alt"></i> Tickets
+            </a>
+          </li>
+          <li>
+            <a href="#" data-section="users" onclick="showAdminSection('users', event)">
+              <i class="fas fa-users"></i> Users
+            </a>
+          </li>
+          <li>
+            <a href="#" data-section="settings" onclick="showAdminSection('settings', event)">
+              <i class="fas fa-cog"></i> Settings
+            </a>
+          </li>
+          <li>
+            <a href="#" onclick="adminLogout(event)">
+              <i class="fas fa-sign-out-alt"></i> Logout
+            </a>
+          </li>
+        </ul>
+      </nav>
+      
+      <div class="sidebar-footer">
+        <div class="user-profile">
+          <div class="avatar">
+            <i class="fas fa-user-circle"></i>
+          </div>
+          <div class="user-info">
+            <span class="username" id="adminUsername">Loading...</span>
+            <span class="role" id="adminRole">Administrator</span>
+          </div>
+        </div>
+      </div>
+    </aside>
+    
+    <main class="admin-main">
+      <header class="admin-header">
+        <h2 id="adminSectionTitle">Dashboard</h2>
+        <div class="header-actions">
+          <div class="search-box">
+            <i class="fas fa-search"></i>
+            <input type="text" placeholder="Search..." id="globalSearch">
+          </div>
+          <div class="notifications">
+            <i class="fas fa-bell"></i>
+            <span class="badge">3</span>
+          </div>
+        </div>
+      </header>
+      
+      <div class="admin-content">
+        <!-- Dashboard Section -->
+        <section id="admin-dashboard" class="admin-section active">
+          <div class="stats-grid">
+            <div class="stat-card">
+              <div class="stat-icon">
+                <i class="fas fa-ticket-alt"></i>
+              </div>
+              <div class="stat-info">
+                <h3>Total Tickets</h3>
+                <span id="totalTickets">0</span>
+              </div>
+            </div>
+            
+            <div class="stat-card">
+              <div class="stat-icon">
+                <i class="fas fa-clock"></i>
+              </div>
+              <div class="stat-info">
+                <h3>Pending Tickets</h3>
+                <span id="pendingTickets">0</span>
+              </div>
+            </div>
+            
+            <div class="stat-card">
+              <div class="stat-icon">
+                <i class="fas fa-check-circle"></i>
+              </div>
+              <div class="stat-info">
+                <h3>Resolved Tickets</h3>
+                <span id="resolvedTickets">0</span>
+              </div>
+            </div>
+            
+            <div class="stat-card">
+              <div class="stat-icon">
+                <i class="fas fa-users"></i>
+              </div>
+              <div class="stat-info">
+                <h3>Registered Users</h3>
+                <span id="registeredUsers">0</span>
+              </div>
+            </div>
+          </div>
+          
+          <div class="charts-row">
+            <div class="chart-card">
+              <h3>Tickets by Status</h3>
+              <canvas id="statusChart"></canvas>
+            </div>
+            <div class="chart-card">
+              <h3>Tickets by Inquiry Type</h3>
+              <canvas id="typeChart"></canvas>
+            </div>
+          </div>
+          
+          <div class="recent-tickets">
+            <h3>Recent Tickets</h3>
+            <div class="table-responsive">
+              <table id="recentTicketsTable" class="compact-table">
+                <thead>
+                  <tr>
+                    <th>ID</th>
+                    <th>Subject</th>
+                    <th>Status</th>
+                    <th>Date</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="recent-tickets-table-body">
+               </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+        
+        <!-- Tickets Section -->
+        <section id="admin-tickets" class="admin-section">
+          <div class="section-header">
+            <h3>Manage Tickets</h3>
+            <div class="section-actions">
+              <button class="btn-primary" onclick="exportTickets()">
+                <i class="fas fa-download"></i> Export
+              </button>
+            </div>
+          </div>
+          
+          <div class="filters">
+            <div class="filter-group">
+              <label>Status</label>
+              <select id="filterStatus" onchange="filterTickets()">
+                <option value="">All Statuses</option>
+                <option value="Open">Open</option>
+                <option value="In Progress">In Progress</option>
+                <option value="Resolved">Resolved</option>
+              </select>
+            </div>
+            
+            <div class="filter-group">
+              <label>Priority</label>
+              <select id="filterPriority" onchange="filterTickets()">
+                <option value="">All Priorities</option>
+                <option value="Low">Low</option>
+                <option value="Medium">Medium</option>
+                <option value="High">High</option>
+              </select>
+            </div>
+            
+            <div class="filter-group">
+              <label>Inquiry Type</label>
+              <select id="filterType" onchange="filterTickets()">
+                <option value="">All Types</option>
+                <!-- Will be populated by JavaScript -->
+              </select>
+            </div>
+            
+            <div class="filter-group search-group">
+              <label>Search</label>
+              <div class="search-input">
+                <i class="fas fa-search"></i>
+                <input type="text" id="ticketSearch" placeholder="Search tickets..." oninput="filterTickets()">
+              </div>
+            </div>
+          </div>
+          
+          <div class="table-responsive">
+            <table id="ticketsTable" class="data-table">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Subject</th>
+                  <th>Requester</th>
+                  <th>Inquiry Type</th>
+                  <th>Status</th>
+                  <th>Priority</th>
+                  <th>Date</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+               <tbody id="tickets-table-body">
+              </tbody>
+            </table>
+          </div>
+        </section>
+        
+        <!-- Users Section -->
+        <section id="admin-users" class="admin-section">
+          <div class="section-header">
+            <h3>Manage Users</h3>
+            <div class="section-actions">
+              <button class="btn-primary" onclick="showAddUserModal()">
+                <i class="fas fa-plus"></i> Add User
+              </button>
+            </div>
+          </div>
+          
+          <div class="table-responsive">
+            <table id="usersTable" class="data-table">
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Email</th>
+                  <th>Role</th>
+                  <th>Last Login</th>
+                  <th>Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+               <tbody id="users-table-body">
+              </tbody>
+            </table>
+          </div>
+        </section>
+        
+        <!-- Settings Section -->
+        <section id="admin-settings" class="admin-section">
+          <div class="settings-tabs">
+            <div class="tab-header">
+              <button class="tab-button active" onclick="openSettingsTab('general')">General</button>
+              <button class="tab-button" onclick="openSettingsTab('email')">Email Templates</button>
+              <button class="tab-button" onclick="openSettingsTab('inquiry')">Inquiry Types</button>
+            </div>
+            
+            <div id="general-tab" class="tab-content active">
+              <h3>General Settings</h3>
+              <form id="generalSettingsForm">
+                <div class="form-group">
+                  <label for="systemName">System Name</label>
+                  <input type="text" id="systemName" name="systemName" required>
+                </div>
+                
+                <div class="form-group">
+                  <label for="adminEmail">Admin Email</label>
+                  <input type="email" id="adminEmail" name="adminEmail" required>
+                </div>
+                
+                <div class="form-group">
+                  <label for="ticketPrefix">Ticket Prefix</label>
+                  <input type="text" id="ticketPrefix" name="ticketPrefix" required>
+                </div>
+                
+                <div class="form-actions">
+                  <button type="submit" class="btn-primary">
+                    <i class="fas fa-save"></i> Save Settings
+                  </button>
+                </div>
+              </form>
+            </div>
+            
+            <div id="email-tab" class="tab-content">
+              <div class="email-templates-header">
+                <h3>Email Templates</h3>
+                <button class="btn-primary" onclick="showAddTemplateModal()">
+                  <i class="fas fa-plus"></i> Add Template
+                </button>
+              </div>
+              
+              <div class="email-templates-list">
+                <!-- Will be populated by JavaScript -->
+              </div>
+            </div>
+            
+            <div id="inquiry-tab" class="tab-content">
+              <div class="inquiry-types-header">
+                <h3>Inquiry Types</h3>
+                <button class="btn-primary" onclick="showAddInquiryTypeModal()">
+                  <i class="fas fa-plus"></i> Add Type
+                </button>
+              </div>
+              
+              <div class="inquiry-types-list">
+                <!-- Will be populated by JavaScript -->
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+    </main>
+  </div>
+  
+  <!-- Ticket Detail Modal -->
+  <div id="ticketModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 id="ticketModalTitle">Ticket Details</h3>
+        <span class="close" onclick="closeModal('ticketModal')">&times;</span>
+      </div>
+      <div class="modal-body">
+        <div class="ticket-details">
+          <div class="detail-row">
+            <div class="detail-label">Ticket ID:</div>
+            <div class="detail-value" id="modalTicketId"></div>
+          </div>
+          <div class="detail-row">
+            <div class="detail-label">Status:</div>
+            <div class="detail-value" id="modalTicketStatus"></div>
+          </div>
+          <div class="detail-row">
+            <div class="detail-label">Priority:</div>
+            <div class="detail-value" id="modalTicketPriority"></div>
+          </div>
+          <div class="detail-row">
+            <div class="detail-label">Created:</div>
+            <div class="detail-value" id="modalTicketDate"></div>
+          </div>
+          <div class="detail-row">
+            <div class="detail-label">Requester:</div>
+            <div class="detail-value" id="modalTicketRequester"></div>
+          </div>
+          <div class="detail-row">
+            <div class="detail-label">Faculty/Department:</div>
+            <div class="detail-value" id="modalTicketFaculty"></div>
+          </div>
+          <div class="detail-row">
+            <div class="detail-label">Inquiry Type:</div>
+            <div class="detail-value" id="modalTicketType"></div>
+          </div>
+          <div class="detail-row">
+            <div class="detail-label">Subject:</div>
+            <div class="detail-value" id="modalTicketSubject"></div>
+          </div>
+          <div class="detail-row full-width">
+            <div class="detail-label">Description:</div>
+            <div class="detail-value" id="modalTicketDescription"></div>
+          </div>
+        </div>
+        
+        <div class="ticket-actions">
+          <div class="form-group">
+            <label for="ticketStatusUpdate">Update Status</label>
+            <select id="ticketStatusUpdate">
+              <option value="Open">Open</option>
+              <option value="In Progress">In Progress</option>
+              <option value="Resolved">Resolved</option>
+            </select>
+          </div>
+          
+          <div class="form-group">
+            <label for="ticketPriorityUpdate">Update Priority</label>
+            <select id="ticketPriorityUpdate">
+              <option value="Low">Low</option>
+              <option value="Medium">Medium</option>
+              <option value="High">High</option>
+            </select>
+          </div>
+          
+          <div class="form-group">
+            <label for="ticketAssignee">Assign To</label>
+            <select id="ticketAssignee">
+              <!-- Will be populated by JavaScript -->
+            </select>
+          </div>
+          
+          <div class="form-group">
+            <label for="ticketNotes">Resolution Notes</label>
+            <textarea id="ticketNotes" rows="3"></textarea>
+          </div>
+          
+          <div class="form-actions">
+            <button class="btn-secondary" onclick="closeModal('ticketModal')">
+              Cancel
+            </button>
+            <button class="btn-primary" onclick="updateTicket()">
+              <i class="fas fa-save"></i> Save Changes
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Add User Modal -->
+  <div id="addUserModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>Add New User</h3>
+        <span class="close" onclick="closeModal('addUserModal')">&times;</span>
+      </div>
+      <div class="modal-body">
+        <form id="addUserForm">
+          <div class="form-group">
+            <label for="newUserName">Full Name</label>
+            <input type="text" id="newUserName" required>
+          </div>
+          
+          <div class="form-group">
+            <label for="newUserEmail">Email</label>
+            <input type="email" id="newUserEmail" required>
+          </div>
+          
+          <div class="form-group">
+            <label for="newUserRole">Role</label>
+            <select id="newUserRole" required>
+              <option value="admin">Administrator</option>
+              <option value="support">Support Staff</option>
+              <option value="viewer">Viewer</option>
+            </select>
+          </div>
+          
+          <div class="form-group">
+            <label for="newUserPassword">Password</label>
+            <input type="password" id="newUserPassword" required minlength="8">
+          </div>
+          
+          <div class="form-actions">
+            <button type="button" class="btn-secondary" onclick="closeModal('addUserModal')">
+              Cancel
+            </button>
+            <button type="submit" class="btn-primary">
+              <i class="fas fa-save"></i> Create User
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Add Template Modal -->
+  <div id="addTemplateModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>Add Email Template</h3>
+        <span class="close" onclick="closeModal('addTemplateModal')">&times;</span>
+      </div>
+      <div class="modal-body">
+        <form id="addTemplateForm">
+          <div class="form-group">
+            <label for="templateId">Template ID</label>
+            <input type="text" id="templateId" required>
+          </div>
+          
+          <div class="form-group">
+            <label for="templateTrigger">Trigger Event</label>
+            <select id="templateTrigger" required>
+              <option value="TicketSubmission">New Ticket Submission</option>
+              <option value="TicketUpdate">Ticket Status Update</option>
+              <option value="TicketResolution">Ticket Resolution</option>
+              <option value="PasswordReset">Password Reset</option>
+            </select>
+          </div>
+          
+          <div class="form-group">
+            <label for="templateSubject">Subject</label>
+            <input type="text" id="templateSubject" required>
+          </div>
+          
+          <div class="form-group">
+            <label for="templateBody">Body</label>
+            <textarea id="templateBody" rows="8" required></textarea>
+            <small>Use {{variable}} for dynamic content</small>
+          </div>
+          
+          <div class="form-actions">
+            <button type="button" class="btn-secondary" onclick="closeModal('addTemplateModal')">
+              Cancel
+            </button>
+            <button type="submit" class="btn-primary">
+              <i class="fas fa-save"></i> Save Template
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Add Inquiry Type Modal -->
+  <div id="addInquiryTypeModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>Add Inquiry Type</h3>
+        <span class="close" onclick="closeModal('addInquiryTypeModal')">&times;</span>
+      </div>
+      <div class="modal-body">
+        <form id="addInquiryTypeForm">
+          <div class="form-group">
+            <label for="inquiryTypeName">Name</label>
+            <input type="text" id="inquiryTypeName" required>
+          </div>
+          
+          <div class="form-group">
+            <label for="inquiryTypeDescription">Description</label>
+            <textarea id="inquiryTypeDescription" rows="3" required></textarea>
+          </div>
+          
+          <div class="form-group">
+            <label for="inquiryTypeAssignee">Default Assignee</label>
+            <select id="inquiryTypeAssignee" required>
+              <!-- Will be populated by JavaScript -->
+            </select>
+          </div>
+          
+          <div class="form-actions">
+            <button type="button" class="btn-secondary" onclick="closeModal('addInquiryTypeModal')">
+              Cancel
+            </button>
+            <button type="submit" class="btn-primary">
+              <i class="fas fa-save"></i> Save Type
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+  
+  <div id="notification" class="notification"></div>
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.7.1/chart.min.js"></script>
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
+  
+  <script>
+    // Global variables
+    let currentTicketId = null;
+    let statusChart, typeChart;
+    let ticketsTable, usersTable;
+    
+    document.addEventListener('DOMContentLoaded', function() {
+      console.log('Admin view loaded, initializing...');
+      
+      // Load admin username
+      loadAdminInfo();
+      
+      // Initialize charts
+      initializeCharts();
+      
+      // Load initial data
+      loadDashboardData();
+      loadTickets();
+      loadUsers();
+      loadInquiryTypes();
+      loadEmailTemplates();
+      loadSettings();
+      
+      // Initialize DataTables
+      ticketsTable = $('#ticketsTable').DataTable({
+        responsive: true,
+        pageLength: 10,
+        order: [[6, 'desc']],
+        columnDefs: [
+          { targets: [7], orderable: false } // Make actions column non-orderable
+        ]
+      });
+      
+      usersTable = $('#usersTable').DataTable({
+        responsive: true,
+        pageLength: 10,
+        order: [[3, 'desc']]
+      });
+      
+      // Form submissions
+      document.getElementById('addUserForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        addNewUser();
+      });
+      
+      document.getElementById('addTemplateForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        addNewTemplate();
+      });
+      
+      document.getElementById('addInquiryTypeForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        addNewInquiryType();
+      });
+      
+      document.getElementById('generalSettingsForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        saveGeneralSettings();
+      });
+    });
+    
+    function loadAdminInfo() {
+      google.script.run.withSuccessHandler(function(user) {
+        document.getElementById('adminUsername').textContent = user.name;
+      }).withFailureHandler(function(error) {
+        console.error('Error loading admin info:', error);
+        document.getElementById('adminUsername').textContent = 'Admin';
+      }).getCurrentUser();
+    }
+    
+    function initializeCharts() {
+      const statusCtx = document.getElementById('statusChart').getContext('2d');
+      const typeCtx = document.getElementById('typeChart').getContext('2d');
+      
+      statusChart = new Chart(statusCtx, {
+        type: 'doughnut',
+        data: {
+          labels: ['Open', 'In Progress', 'Resolved'],
+          datasets: [{
+            data: [0, 0, 0],
+            backgroundColor: [
+              '#28a745',
+              '#ffc107',
+              '#6c757d'
+            ]
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: {
+              position: 'bottom'
+            }
+          }
+        }
+      });
+      
+      typeChart = new Chart(typeCtx, {
+        type: 'bar',
+        data: {
+          labels: [],
+          datasets: [{
+            label: 'Tickets by Type',
+            data: [],
+            backgroundColor: '#EBCA24'
+          }]
+        },
+        options: {
+          responsive: true,
+          scales: {
+            y: {
+              beginAtZero: true
+            }
+          }
+        }
+      });
+    }
+    
+    function loadDashboardData() {
+      console.log('Loading dashboard data...');
+      google.script.run.withSuccessHandler(function(data) {
+        console.log('Dashboard data received:', data);
+        
+        document.getElementById('totalTickets').textContent = data.totalTickets;
+        document.getElementById('pendingTickets').textContent = data.pendingTickets;
+        document.getElementById('resolvedTickets').textContent = data.resolvedTickets;
+        document.getElementById('registeredUsers').textContent = data.registeredUsers;
+        
+        // Update status chart
+        statusChart.data.datasets[0].data = [
+          data.statusCounts.Open || 0,
+          data.statusCounts['In Progress'] || 0,
+          data.statusCounts.Resolved || 0
+        ];
+        statusChart.update();
+        
+        // Update type chart
+        typeChart.data.labels = data.typeCounts.map(item => item.type);
+        typeChart.data.datasets[0].data = data.typeCounts.map(item => item.count);
+        typeChart.update();
+        
+        // Populate recent tickets
+        const recentTicketsBody = document.getElementById('recent-tickets-table-body'); 
+        recentTicketsBody.innerHTML = '';
+        
+        data.recentTickets.forEach(ticket => {
+          const row = document.createElement('tr');
+          row.innerHTML = `
+            <td>${ticket.id}</td>
+            <td>${ticket.subject}</td>
+            <td><span class="status-badge ${ticket.status.toLowerCase().replace(' ', '-')}">${ticket.status}</span></td>
+            <td>${new Date(ticket.date).toLocaleDateString()}</td>
+            <td>
+              <button class="btn-action-view" onclick="viewTicketDetails('${ticket.id}')">
+                <i class="fas fa-eye"></i> View
+              </button>
+            </td>
+          `;
+          recentTicketsBody.appendChild(row);
+        });
+      }).withFailureHandler(function(error) {
+        console.error('Error loading dashboard data:', error);
+        showNotification('Error loading dashboard data', 'error');
+      }).getDashboardData();
+    }
+    
+    function loadTickets() {
+      console.log('Loading tickets...');
+      const tableBody = document.getElementById('tickets-table-body');
+      if (!tableBody) {
+        console.error('Tickets table body not found');
+        return;
+      }
+      
+      tableBody.innerHTML = '<tr><td colspan="8" class="text-center"><i class="fas fa-spinner fa-spin"></i> Loading tickets...</td></tr>';
+
+      google.script.run.withSuccessHandler(function(tickets) {
+        console.log('Received tickets:', tickets);
+        tableBody.innerHTML = '';
+        
+        if (!tickets || tickets.length === 0) {
+          tableBody.innerHTML = '<tr><td colspan="8" class="text-center">No tickets found</td></tr>';
+          return;
+        }
+        
+        tickets.forEach(ticket => {
+          const row = document.createElement('tr');
+          const ticketDate = ticket.date ? new Date(ticket.date).toLocaleDateString() : 'N/A';
+          
+          row.innerHTML = `
+            <td>${ticket.id || 'N/A'}</td>
+            <td>${ticket.subject || 'No Subject'}</td>
+            <td>${ticket.name || 'Unknown'}</td>
+            <td>${ticket.inquiryType || 'General'}</td>
+            <td><span class="status-badge ${(ticket.status || 'open').toLowerCase().replace(' ', '-')}">${ticket.status || 'Open'}</span></td>
+            <td>${ticket.priority || 'Medium'}</td>
+            <td>${ticketDate}</td>
+            <td>
+              <button class="btn-action-view" onclick="viewTicketDetails('${ticket.id}')">
+                <i class="fas fa-eye"></i> View
+              </button>
+            </td>
+          `;
+          tableBody.appendChild(row);
+        });
+        
+        // Refresh DataTable if it exists
+        if (ticketsTable) {
+          ticketsTable.destroy();
+          ticketsTable = $('#ticketsTable').DataTable({
+            responsive: true,
+            pageLength: 10,
+            order: [[6, 'desc']],
+            columnDefs: [
+              { targets: [7], orderable: false }
+            ]
+          });
+        }
+      }).withFailureHandler(function(error) {
+        console.error('Error loading tickets:', error);
+        tableBody.innerHTML = '<tr><td colspan="8" class="text-center text-danger">Error loading tickets: ' + error.message + '</td></tr>';
+        showNotification('Error loading tickets: ' + error.message, 'error');
+      }).getAllTickets();
+    }
+    
+    function filterTickets() {
+      const status = document.getElementById('filterStatus').value;
+      const priority = document.getElementById('filterPriority').value;
+      const type = document.getElementById('filterType').value;
+      const search = document.getElementById('ticketSearch').value.toLowerCase();
+      
+      ticketsTable.rows().every(function() {
+        const row = this.node();
+        const rowData = this.data();
+        
+        const statusMatch = !status || rowData[4] === status;
+        const priorityMatch = !priority || rowData[5] === priority;
+        const typeMatch = !type || rowData[3] === type;
+        const searchMatch = !search || 
+          rowData[0].toLowerCase().includes(search) || 
+          rowData[1].toLowerCase().includes(search) || 
+          rowData[2].toLowerCase().includes(search);
+        
+        if (statusMatch && priorityMatch && typeMatch && searchMatch) {
+          $(row).show();
+        } else {
+          $(row).hide();
+        }
+      });
+    }
+    
+    function loadUsers() {
+      google.script.run.withSuccessHandler(function(users) {
+        const usersBody = document.getElementById('users-table-body');
+        usersBody.innerHTML = '';
+        
+        users.forEach(user => {
+          const row = document.createElement('tr');
+          row.innerHTML = `
+            <td>${user.name}</td>
+            <td>${user.email}</td>
+            <td>${user.role}</td>
+            <td>${user.lastLogin ? new Date(user.lastLogin).toLocaleString() : 'Never'}</td>
+            <td><span class="status-badge ${user.active ? 'open' : 'resolved'}">${user.active ? 'Active' : 'Inactive'}</span></td>
+            <td>
+              <button class="btn-action-edit" onclick="editUser('${user.email}')">
+                <i class="fas fa-edit"></i> Edit
+              </button>
+              <button class="btn-action-delete" onclick="deleteUser('${user.email}')">
+                <i class="fas fa-trash"></i> Delete
+              </button>
+            </td>
+          `;
+          usersBody.appendChild(row);
+        });
+        
+        // Refresh DataTable
+        if (usersTable) {
+          usersTable.destroy();
+          usersTable = $('#usersTable').DataTable({
+            responsive: true,
+            pageLength: 10,
+            order: [[3, 'desc']]
+          });
+        }
+      }).withFailureHandler(function(error) {
+        console.error('Error loading users:', error);
+        showNotification('Error loading users', 'error');
+      }).getAllUsers();
+    }
+    
+    function loadInquiryTypes() {
+      google.script.run.withSuccessHandler(function(types) {
+        const typesList = document.querySelector('.inquiry-types-list');
+        typesList.innerHTML = '';
+        
+        types.forEach(type => {
+          const typeCard = document.createElement('div');
+          typeCard.className = 'inquiry-type-card';
+          typeCard.innerHTML = `
+            <div class="type-header">
+              <h4>${type.name}</h4>
+              <div class="type-actions">
+                <button class="btn-action-edit" onclick="editInquiryType('${type.id}')">
+                  <i class="fas fa-edit"></i>
+                </button>
+                <button class="btn-action-delete" onclick="deleteInquiryType('${type.id}')">
+                  <i class="fas fa-trash"></i>
+                </button>
+              </div>
+            </div>
+            <p class="type-description">${type.description}</p>
+            <div class="type-footer">
+              <span>Default Assignee: ${type.defaultAssignee}</span>
+            </div>
+          `;
+          typesList.appendChild(typeCard);
+        });
+      }).withFailureHandler(function(error) {
+        console.error('Error loading inquiry types:', error);
+      }).getInquiryTypes();
+    }
+    
+    function loadEmailTemplates() {
+      google.script.run.withSuccessHandler(function(templates) {
+        const templatesList = document.querySelector('.email-templates-list');
+        templatesList.innerHTML = '';
+        
+        templates.forEach(template => {
+          const templateCard = document.createElement('div');
+          templateCard.className = 'email-template-card';
+          templateCard.innerHTML = `
+            <div class="template-header">
+              <h4>${template.id}</h4>
+              <span class="template-trigger">${template.trigger}</span>
+              <div class="template-actions">
+                <button class="btn-action-edit" onclick="editEmailTemplate('${template.id}')">
+                  <i class="fas fa-edit"></i>
+                </button>
+                <button class="btn-action-delete" onclick="deleteEmailTemplate('${template.id}')">
+                  <i class="fas fa-trash"></i>
+                </button>
+              </div>
+            </div>
+            <div class="template-subject">${template.subject}</div>
+            <div class="template-body">${template.body.substring(0, 100)}...</div>
+          `;
+          templatesList.appendChild(templateCard);
+        });
+      }).withFailureHandler(function(error) {
+        console.error('Error loading email templates:', error);
+      }).getEmailTemplates();
+    }
+    
+    function loadSettings() {
+      google.script.run.withSuccessHandler(function(settings) {
+        document.getElementById('systemName').value = settings.systemName || '';
+        document.getElementById('adminEmail').value = settings.adminEmail || '';
+        document.getElementById('ticketPrefix').value = settings.ticketPrefix || '';
+      }).withFailureHandler(function(error) {
+        console.error('Error loading settings:', error);
+      }).getSystemSettings();
+    }
+    
+    function viewTicketDetails(ticketId) {
+      currentTicketId = ticketId;
+      
+      google.script.run.withSuccessHandler(function(ticket) {
+        if (!ticket) {
+          showNotification('Ticket not found', 'error');
+          return;
+        }
+        
+        document.getElementById('modalTicketId').textContent = ticket.id;
+        document.getElementById('modalTicketStatus').textContent = ticket.status;
+        document.getElementById('modalTicketPriority').textContent = ticket.priority;
+        document.getElementById('modalTicketDate').textContent = new Date(ticket.date).toLocaleString();
+        document.getElementById('modalTicketRequester').textContent = `${ticket.name} (${ticket.email})`;
+        document.getElementById('modalTicketFaculty').textContent = `${ticket.faculty} / ${ticket.department}`;
+        document.getElementById('modalTicketType').textContent = ticket.inquiryType;
+        document.getElementById('modalTicketSubject').textContent = ticket.subject;
+        document.getElementById('modalTicketDescription').textContent = ticket.description;
+        
+        document.getElementById('ticketStatusUpdate').value = ticket.status;
+        document.getElementById('ticketPriorityUpdate').value = ticket.priority;
+        document.getElementById('ticketNotes').value = ticket.resolutionNotes || '';
+        
+        // Populate assignee dropdown
+        google.script.run.withSuccessHandler(function(users) {
+          const assigneeSelect = document.getElementById('ticketAssignee');
+          assigneeSelect.innerHTML = '';
+          
+          users.forEach(user => {
+            const option = document.createElement('option');
+            option.value = user.email;
+            option.textContent = `${user.name} (${user.role})`;
+            if (user.email === ticket.assignee) {
+              option.selected = true;
+            }
+            assigneeSelect.appendChild(option);
+          });
+        }).getUsers();
+        
+        openModal('ticketModal');
+      }).withFailureHandler(function(error) {
+        console.error('Error loading ticket details:', error);
+        showNotification('Error loading ticket details', 'error');
+      }).getTicketDetails(ticketId);
+    }
+    
+    function updateTicket() {
+      const status = document.getElementById('ticketStatusUpdate').value;
+      const priority = document.getElementById('ticketPriorityUpdate').value;
+      const assignee = document.getElementById('ticketAssignee').value;
+      const notes = document.getElementById('ticketNotes').value;
+      
+      google.script.run.withSuccessHandler(function() {
+        showNotification('Ticket updated successfully!', 'success');
+        closeModal('ticketModal');
+        loadDashboardData();
+        loadTickets();
+      }).withFailureHandler(function(error) {
+        showNotification('Error updating ticket: ' + error.message, 'error');
+      }).updateTicketDetails({
+        ticketId: currentTicketId,
+        status: status,
+        priority: priority,
+        assignee: assignee,
+        resolutionNotes: notes
+      });
+    }
+    
+    function showAddUserModal() {
+      document.getElementById('addUserForm').reset();
+      openModal('addUserModal');
+    }
+    
+    function addNewUser() {
+      const name = document.getElementById('newUserName').value;
+      const email = document.getElementById('newUserEmail').value;
+      const role = document.getElementById('newUserRole').value;
+      const password = document.getElementById('newUserPassword').value;
+      
+      google.script.run.withSuccessHandler(function() {
+        showNotification('User added successfully!', 'success');
+        closeModal('addUserModal');
+        loadUsers();
+        loadDashboardData();
+      }).withFailureHandler(function(error) {
+        showNotification('Error adding user: ' + error.message, 'error');
+      }).addUser({
+        name: name,
+        email: email,
+        role: role,
+        password: password
+      });
+    }
+    
+    function editUser(email) {
+      showNotification('Edit user functionality to be implemented', 'info');
+    }
+    
+    function deleteUser(email) {
+      if (confirm(`Are you sure you want to delete user ${email}?`)) {
+        google.script.run.withSuccessHandler(function() {
+          showNotification('User deleted successfully!', 'success');
+          loadUsers();
+          loadDashboardData();
+        }).withFailureHandler(function(error) {
+          showNotification('Error deleting user: ' + error.message, 'error');
+        }).deleteUser(email);
+      }
+    }
+    
+    function showAddTemplateModal() {
+      document.getElementById('addTemplateForm').reset();
+      openModal('addTemplateModal');
+    }
+    
+    function addNewTemplate() {
+      const id = document.getElementById('templateId').value;
+      const trigger = document.getElementById('templateTrigger').value;
+      const subject = document.getElementById('templateSubject').value;
+      const body = document.getElementById('templateBody').value;
+      
+      google.script.run.withSuccessHandler(function() {
+        showNotification('Template added successfully!', 'success');
+        closeModal('addTemplateModal');
+        loadEmailTemplates();
+      }).withFailureHandler(function(error) {
+        showNotification('Error adding template: ' + error.message, 'error');
+      }).saveEmailTemplate({
+        id: id,
+        trigger: trigger,
+        subject: subject,
+        body: body
+      });
+    }
+    
+    function editEmailTemplate(id) {
+      showNotification('Edit template functionality to be implemented', 'info');
+    }
+    
+    function deleteEmailTemplate(id) {
+      if (confirm(`Are you sure you want to delete template ${id}?`)) {
+        google.script.run.withSuccessHandler(function() {
+          showNotification('Template deleted successfully!', 'success');
+          loadEmailTemplates();
+        }).withFailureHandler(function(error) {
+          showNotification('Error deleting template: ' + error.message, 'error');
+        }).deleteEmailTemplate(id);
+      }
+    }
+    
+    function showAddInquiryTypeModal() {
+      document.getElementById('addInquiryTypeForm').reset();
+      
+      // Populate assignee dropdown
+      google.script.run.withSuccessHandler(function(users) {
+        const assigneeSelect = document.getElementById('inquiryTypeAssignee');
+        assigneeSelect.innerHTML = '';
+        
+        users.forEach(user => {
+          const option = document.createElement('option');
+          option.value = user.email;
+          option.textContent = `${user.name} (${user.role})`;
+          assigneeSelect.appendChild(option);
+        });
+        
+        openModal('addInquiryTypeModal');
+      }).getUsers();
+    }
+    
+    function addNewInquiryType() {
+      const name = document.getElementById('inquiryTypeName').value;
+      const description = document.getElementById('inquiryTypeDescription').value;
+      const assignee = document.getElementById('inquiryTypeAssignee').value;
+      
+      google.script.run.withSuccessHandler(function() {
+        showNotification('Inquiry type added successfully!', 'success');
+        closeModal('addInquiryTypeModal');
+        loadInquiryTypes();
+        loadTickets(); // Refresh ticket filters
+      }).withFailureHandler(function(error) {
+        showNotification('Error adding inquiry type: ' + error.message, 'error');
+      }).addInquiryType({
+        name: name,
+        description: description,
+        defaultAssignee: assignee
+      });
+    }
+    
+    function editInquiryType(id) {
+      showNotification('Edit inquiry type functionality to be implemented', 'info');
+    }
+    
+    function deleteInquiryType(id) {
+      if (confirm(`Are you sure you want to delete inquiry type ${id}?`)) {
+        google.script.run.withSuccessHandler(function() {
+          showNotification('Inquiry type deleted successfully!', 'success');
+          loadInquiryTypes();
+          loadTickets(); // Refresh ticket filters
+        }).withFailureHandler(function(error) {
+          showNotification('Error deleting inquiry type: ' + error.message, 'error');
+        }).deleteInquiryType(id);
+      }
+    }
+    
+    function saveGeneralSettings() {
+      const systemName = document.getElementById('systemName').value;
+      const adminEmail = document.getElementById('adminEmail').value;
+      const ticketPrefix = document.getElementById('ticketPrefix').value;
+      
+      google.script.run.withSuccessHandler(function() {
+        showNotification('Settings saved successfully!', 'success');
+      }).withFailureHandler(function(error) {
+        showNotification('Error saving settings: ' + error.message, 'error');
+      }).saveSystemSettings({
+        systemName: systemName,
+        adminEmail: adminEmail,
+        ticketPrefix: ticketPrefix
+      });
+    }
+    
+    function exportTickets() {
+      google.script.run.withSuccessHandler(function(url) {
+        showNotification('Export completed! Download will start shortly.', 'success');
+        window.open(url, '_blank');
+      }).withFailureHandler(function(error) {
+        showNotification('Error exporting tickets: ' + error.message, 'error');
+      }).exportTicketsToCSV();
+    }
+    
+    function adminLogout(event) {
+      if (event) event.preventDefault();
+      google.script.run.withSuccessHandler(function(url) {
+        window.top.location.href = url;
+      }).logout();
+    }
+    
+    function showAdminSection(sectionId, event) {
+      if (event) event.preventDefault();
+      
+      document.querySelectorAll('.admin-section').forEach(section => {
+        section.classList.remove('active');
+      });
+      document.getElementById(`admin-${sectionId}`).classList.add('active');
+      document.getElementById('adminSectionTitle').textContent = 
+        sectionId.charAt(0).toUpperCase() + sectionId.slice(1);
+      
+      // Update active nav link
+      document.querySelectorAll('.sidebar-nav a').forEach(link => {
+        link.classList.remove('active');
+        if (link.getAttribute('data-section') === sectionId) {
+          link.classList.add('active');
+        }
+      });
+      
+      // Refresh data when switching to tickets section
+      if (sectionId === 'tickets') {
+        loadTickets();
+      }
+      
+      // Log navigation
+      google.script.run.logNavigation(sectionId);
+    }
+    
+    function openSettingsTab(tabId) {
+      document.querySelectorAll('.tab-button').forEach(button => {
+        button.classList.remove('active');
+      });
+      document.querySelectorAll('.tab-content').forEach(content => {
+        content.classList.remove('active');
+      });
+      
+      document.querySelector(`.tab-button[onclick*="'${tabId}'"]`).classList.add('active');
+      document.getElementById(`${tabId}-tab`).classList.add('active');
+    }
+    
+    function openModal(modalId) {
+      document.getElementById(modalId).style.display = 'block';
+    }
+    
+    function closeModal(modalId) {
+      document.getElementById(modalId).style.display = 'none';
+    }
+    
+    function showNotification(message, type) {
+      const notification = document.getElementById('notification');
+      notification.textContent = message;
+      notification.className = 'notification ' + type;
+      notification.style.display = 'block';
+      
+      setTimeout(() => {
+        notification.style.display = 'none';
+      }, 5000);
+    }
+  </script>
+</body>
+</html>
